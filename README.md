@@ -1,6 +1,5 @@
 # CorretorEdu - Sistema de Apoio à Correção Transparente
-
-**Dupla:** [Nome 1] e [Nome 2]
+**Dupla:** João A. e Bianca
 
 ## Descrição do sistema
 

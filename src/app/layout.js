@@ -1,7 +1,8 @@
 import './estilo.css';
 
 export const metadata = {
-  title: 'CorretorNota1000 - Sistema de Apoio de Correção Transparente',
+
+  title: 'CorretorNota1000',
   description: 'Sistema web para apoio de professores da educação básica no processo de correção de redações assistido por IA.',
 };
 

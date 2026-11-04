@@ -1,6 +1,8 @@
 // Dados mockados da Sprint 1 (serão substituídos pela API na Sprint 3).
 
 // Critérios de avaliação (baseados nas 5 competências do ENEM, 0 a 200 pontos cada).
+
+// Critérios de avaliação ENEM
 export const CRITERIOS = [
   {
     id: "c1",
