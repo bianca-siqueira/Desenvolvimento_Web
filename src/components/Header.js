@@ -6,7 +6,7 @@ export default function Header({ totalRedacoes, pendentesCount }) {
           IA
         </div>
         <div>
-          <h1 className="text-xl font-bold text-slate-800">CorretorEdu</h1>
+          <h1 className="text-xl font-bold text-slate-800">CorretorNota1000</h1>
           <p className="text-xs text-slate-500">Sistema de Apoio à Correção Transparente</p>
         </div>
       </div>
