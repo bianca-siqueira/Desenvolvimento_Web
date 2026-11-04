@@ -1,8 +1,9 @@
 import StatusBadge from "./StatusBadge";
+import { NOTA_MAXIMA_TOTAL, somarNotas } from "@/utils/notas";
 
 export default function RedacaoList({ redacoes, selectedId, onSelectRedacao }) {
   return (
-    <aside className="w-full md:w-80 lg:w-96 bg-white border-r border-slate-200 flex flex-col h-full shrink-0">
+    <aside className="w-full md:w-80 lg:w-96 bg-white border-b md:border-b-0 md:border-r border-slate-200 flex flex-col max-h-56 md:max-h-none md:h-full shrink-0">
       <div className="p-4 border-b border-slate-100">
         <h2 className="font-semibold text-slate-800">Redações Recebidas</h2>
         <p className="text-xs text-slate-500">Selecione um aluno para visualizar o texto</p>
@@ -33,6 +34,15 @@ export default function RedacaoList({ redacoes, selectedId, onSelectRedacao }) {
               <p className="text-xs text-slate-600 line-clamp-2 font-normal">
                 {item.tema}
               </p>
+
+              {item.correcao && (
+                <p className="text-xs text-slate-500">
+                  {item.status === "Revisado" ? "Nota final" : "Nota em análise"}:{" "}
+                  <strong className="text-slate-700">
+                    {somarNotas(item.correcao.notas)} / {NOTA_MAXIMA_TOTAL}
+                  </strong>
+                </p>
+              )}
             </button>
           );
         })}

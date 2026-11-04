@@ -1,48 +1,74 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import RedacaoList from "@/components/RedacaoList";
-import { REDACOES_MOCK } from "@/mock/redacoesMock";
+import LeitorRedacao from "@/components/LeitorRedacao";
+import FormularioCorrecao from "@/components/FormularioCorrecao";
+import { REDACOES_MOCK, CRITERIOS } from "@/mock/redacoesMock";
 
 export default function Home() {
-  const [redacoes] = useState(REDACOES_MOCK);
-  const [selectedId, setSelectedId] = useState(REDACOES_MOCK[0].id);
+  // Estados principais da página
+  const [redacoes, setRedacoes] = useState(REDACOES_MOCK); // lista de redações e avaliações
+  const [selectedId, setSelectedId] = useState(REDACOES_MOCK[0].id); // redação aberta
+  const [feedback, setFeedback] = useState(null); // mensagem visual: { tipo, mensagem }
 
   const selectedRedacao = redacoes.find((r) => r.id === selectedId);
   const pendentesCount = redacoes.filter((r) => r.status !== "Revisado").length;
+
+  // A mensagem de feedback some sozinha depois de alguns segundos.
+  useEffect(() => {
+    if (!feedback) return;
+    const timer = setTimeout(() => setFeedback(null), 5000);
+    return () => clearTimeout(timer);
+  }, [feedback]);
+
+  function handleSelecionarRedacao(id) {
+    setSelectedId(id);
+    setFeedback(null);
+  }
+
+  // Atualiza a redação com a correção do professor e o novo status.
+  function handleSalvarCorrecao(id, correcao, novoStatus) {
+    setRedacoes((anteriores) =>
+      anteriores.map((r) => (r.id === id ? { ...r, correcao, status: novoStatus } : r))
+    );
+
+    setFeedback({
+      tipo: "sucesso",
+      mensagem:
+        novoStatus === "Revisado"
+          ? "Correção finalizada! O feedback foi liberado para o aluno."
+          : "Rascunho salvo. A redação continua em análise.",
+    });
+  }
 
   return (
     <div className="flex flex-col h-screen bg-slate-50 font-sans">
       <Header totalRedacoes={redacoes.length} pendentesCount={pendentesCount} />
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
         <RedacaoList
           redacoes={redacoes}
           selectedId={selectedId}
-          onSelectRedacao={(id) => setSelectedId(id)}
+          onSelectRedacao={handleSelecionarRedacao}
         />
 
-        <main className="flex-1 p-6 overflow-y-auto flex flex-col gap-6">
+        <main className="flex-1 p-4 md:p-6 overflow-y-auto flex flex-col gap-6">
           {selectedRedacao ? (
-            <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm max-w-4xl mx-auto w-full">
-              <div className="border-b border-slate-100 pb-4 mb-4">
-                <span className="text-xs font-semibold text-indigo-600 uppercase tracking-wider">
-                  Tema da Redação
-                </span>
-                <h2 className="text-xl font-bold text-slate-800 mt-1">
-                  {selectedRedacao.tema}
-                </h2>
-                <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
-                  <p>Aluno: <strong className="text-slate-700">{selectedRedacao.aluno}</strong></p>
-                  <p>Turma: <strong className="text-slate-700">{selectedRedacao.turma}</strong></p>
-                </div>
-              </div>
+            <>
+              <LeitorRedacao redacao={selectedRedacao} />
 
-              <div className="prose prose-slate max-w-none text-slate-700 leading-relaxed whitespace-pre-line bg-slate-50/50 p-6 rounded-lg border border-slate-100 font-serif">
-                {selectedRedacao.texto}
-              </div>
-            </div>
+              {/* key faz o formulário recomeçar com os dados da redação selecionada */}
+              <FormularioCorrecao
+                key={selectedRedacao.id}
+                redacao={selectedRedacao}
+                criterios={CRITERIOS}
+                feedback={feedback}
+                onSalvar={handleSalvarCorrecao}
+                onFeedback={setFeedback}
+              />
+            </>
           ) : (
             <div className="flex items-center justify-center h-full text-slate-400">
               Selecione uma redação na lista lateral para começar a leitura.
