@@ -72,3 +72,6 @@ src/
 - Formulário de correção com validação das notas e feedback visual (sucesso, erro e informação).
 - Salvar rascunho (status "Em Análise") e liberar feedback ao aluno (status "Revisado").
 - Contador de redações pendentes atualizado no cabeçalho.
+
+
+obs: informações dessa primeira entrega também podem ser encontradas no arquivo "Projeto Final de Web.pdf"
