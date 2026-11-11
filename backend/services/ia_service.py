@@ -9,7 +9,7 @@ from schemas.redacao import CorrecaoIA
 load_dotenv()
 
 API_KEY = os.getenv("GEMINI_API_KEY")
-MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
+MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 
 
 def corrigir_redacao(texto: str, tema: str | None = None) -> CorrecaoIA:
