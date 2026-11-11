@@ -183,23 +183,17 @@ def corrigir_redacao(texto: str, tema: str | None = None) -> CorrecaoIA:
     {texto}
     """
 
-    with genai.Client(
-        api_key=API_KEY,
-        http_options=types.HttpOptions(
-            timeout=30000,
-            retry_options=types.HttpRetryOptions(attempts=1)
-        )
-    ) as client:
+    client = genai.Client(api_key=API_KEY)
 
-        resposta = client.models.generate_content(
-            model=MODEL,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                response_schema=CorrecaoIA,
-                temperature=0.2
-            )
+    resposta = client.models.generate_content(
+        model=MODEL,
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json",
+            response_schema=CorrecaoIA,
+            temperature=0.2
         )
+    )
 
     if resposta.parsed:
         return CorrecaoIA.model_validate(resposta.parsed)
