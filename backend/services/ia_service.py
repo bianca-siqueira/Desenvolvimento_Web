@@ -1,19 +1,12 @@
-import os
-
-from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
+from config import GEMINI_API_KEY, GEMINI_MODEL
 from schemas.redacao import CorrecaoIA
-
-load_dotenv()
-
-API_KEY = os.getenv("GEMINI_API_KEY")
-MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 
 
 def corrigir_redacao(texto: str, tema: str | None = None) -> CorrecaoIA:
-    if not API_KEY:
+    if not GEMINI_API_KEY:
         raise ValueError("Chave da API Gemini não configurada.")
 
     prompt = f"""
@@ -183,17 +176,23 @@ def corrigir_redacao(texto: str, tema: str | None = None) -> CorrecaoIA:
     {texto}
     """
 
-    client = genai.Client(api_key=API_KEY)
-
-    resposta = client.models.generate_content(
-        model=MODEL,
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            response_mime_type="application/json",
-            response_schema=CorrecaoIA,
-            temperature=0.2
+    with genai.Client(
+        api_key=GEMINI_API_KEY,
+        http_options=types.HttpOptions(
+            timeout=100000,
+            retry_options=types.HttpRetryOptions(attempts=1)
         )
-    )
+    ) as client:
+
+        resposta = client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                response_schema=CorrecaoIA,
+                temperature=0.2
+            )
+        )
 
     if resposta.parsed:
         return CorrecaoIA.model_validate(resposta.parsed)
