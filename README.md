@@ -240,7 +240,7 @@ O backend também está hospedado na plataforma Render, permitindo o acesso púb
 
 **Endereços para acesso:**
 
-- API hospedada: https://desenvolvimento-web-api.onrender.com
+- API hospedada: https://desenvolvimento-web-api.onrender.com/docs
 - Documentação automática (Swagger): https://desenvolvimento-web-api.onrender.com/docs
 - Endpoint de correção: https://desenvolvimento-web-api.onrender.com/redacoes/corrigir
 
