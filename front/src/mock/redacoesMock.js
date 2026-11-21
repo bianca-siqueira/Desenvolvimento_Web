@@ -39,6 +39,7 @@ export const REDACOES_MOCK = [
   {
     id: 1,
     aluno: "Ana Beatriz Souza",
+    alunoemail: "...@alunos.escola.com",
     turma: "3º Ano A",
     tema: "Os desafios para o combate à desinformação nas redes sociais no Brasil",
     status: "Pendente",
@@ -80,6 +81,7 @@ Portanto, cabe ao Ministério da Educação incluir a educação midiática nas 
   {
     id: 2,
     aluno: "Carlos Eduardo Lima",
+    alunoemail: "cadulima@alunos.escola.com",
     turma: "3º Ano A",
     tema: "Impactos do uso excessivo de telas na saúde mental dos jovens brasileiros",
     status: "Em Análise",
@@ -121,6 +123,7 @@ Logo, é necessário que a escola promova rodas de conversa sobre o uso conscien
   {
     id: 3,
     aluno: "Mariana Oliveira",
+    alunoemail: "...@alunos.escola.com",
     turma: "3º Ano B",
     tema: "Desafios para a inclusão de estudantes com deficiência nas escolas brasileiras",
     status: "Revisado",
@@ -166,6 +169,7 @@ Portanto, o Governo Federal deve ampliar o investimento em acessibilidade e em c
   {
     id: 4,
     aluno: "João Pedro Santos",
+    alunoemail: "jpsantos@alunos.escola.com",
     turma: "2º Ano A",
     tema: "Desafios para a preservação da Amazônia",
     status: "Pendente",
@@ -199,6 +203,7 @@ Portanto, o governo deveria fiscalizar mais e punir quem desmata, e as pessoas d
   {
     id: 5,
     aluno: "Larissa Ferreira",
+    alunoemail: "...@alunos.escola.com",
     turma: "3º Ano B",
     tema: "Desigualdade no acesso à internet e seus reflexos na educação brasileira",
     status: "Em Análise",
