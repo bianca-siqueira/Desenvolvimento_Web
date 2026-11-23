@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { apiFetch } from "@/services/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -24,33 +25,27 @@ export default function LoginPage() {
     setErro("");
     setCarregando(true);
 
-    //Simulação de validação -> criar ao logar?
-    setTimeout(() => {
-      if (isProfessor) {
-        if (email === "luizinho@professores.escola.com" && senha === "1234") {
-          localStorage.setItem(
-            "usuarioLogado",
-            JSON.stringify({ email, nome: "Prof. Luiz", perfil: "professor" })
-          );
-          router.push("/professor"); //Direciona para a página do professor
-        } else {
-          setErro("Credenciais de professor inválidas. Tente novamente");
-          setCarregando(false);
-        }
-      } else {
-        if (email === "...@alunos.escola.com" && senha === "4321") {
-          localStorage.setItem(
-            "usuarioLogado",
-            JSON.stringify({ email, nome: "Lucas Almeida", perfil: "aluno" })
-          );
-          router.push("/aluno"); //Direciona para a página do aluno
-        } else {
-          setErro("Credenciais de aluno inválidas. Tente novamente");
-          setCarregando(false);
-        }
-      }
-    }, 600);
-  };
+    try {
+    const resposta = await apiFetch("/api/login", {
+      method: "POST",
+      body: JSON.stringify({ email, senha, perfil }),
+    });
+
+    localStorage.setItem(
+      "usuarioLogado",
+      JSON.stringify({
+        ...resposta.usuario,
+        token: resposta.access_token, //Salva o JWT para as próximas requisições
+      })
+    );
+
+    router.push(isProfessor ? "/professor" : "/aluno");
+  } catch (err) {
+    setErro(err.message);
+  } finally {
+    setCarregando(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center p-4">
