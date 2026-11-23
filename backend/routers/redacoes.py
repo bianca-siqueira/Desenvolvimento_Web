@@ -7,7 +7,7 @@ from auth import verificarToken
 router = APIRouter()
 
 
-@router.post("/redacoes/corrigir", response_model=CorrecaoIA)
+@router.post("/corrigir", response_model=CorrecaoIA)
 def corrigir(request: RedacaoRequest, usuario_token: dict = Depends(verificarToken)):
     try:
         return corrigir_redacao(
