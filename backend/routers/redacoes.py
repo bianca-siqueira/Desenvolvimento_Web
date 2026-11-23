@@ -2,12 +2,12 @@ from fastapi import APIRouter, HTTPException, Depends
 
 from schemas.redacao import RedacaoRequest, CorrecaoIA
 from services.ia_service import corrigir_redacao
-from auth import criarToken
+from auth import verificarToken
 
 router = APIRouter()
 
 
-@router.post("/corrigir", response_model=CorrecaoIA)
+@router.post("/redacoes/corrigir", response_model=CorrecaoIA)
 def corrigir(request: RedacaoRequest, usuario_token: dict = Depends(verificarToken)):
     try:
         return corrigir_redacao(
