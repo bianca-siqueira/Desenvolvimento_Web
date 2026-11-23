@@ -157,7 +157,7 @@ export default function FormularioCorrecao({ redacao, criterios, feedback, onSal
             disabled={carregandoIA}
             className="rounded-lg bg-indigo-50 border border-indigo-200 px-3.5 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 disabled:opacity-50 transition cursor-pointer"
           >
-            {carregandoIA ? "Analisando com IA..." : "✨ Gerar nova análise com IA"}
+            {carregandoIA ? "Analisando com IA..." : "Gerar nova análise com IA"}
           </button>
 
           <div className="sm:text-right">
