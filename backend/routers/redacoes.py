@@ -1,13 +1,14 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 
 from schemas.redacao import RedacaoRequest, CorrecaoIA
 from services.ia_service import corrigir_redacao
+from backend.main import verificarToken
 
 router = APIRouter()
 
 
 @router.post("/corrigir", response_model=CorrecaoIA)
-def corrigir(request: RedacaoRequest):
+def corrigir(request: RedacaoRequest, usuario_token: dict = Depends(verificarToken)):
     try:
         return corrigir_redacao(
             texto=request.texto,
@@ -24,3 +25,4 @@ def corrigir(request: RedacaoRequest):
             status_code=502,
             detail="Não foi possível realizar a correção da redação."
         )
+
