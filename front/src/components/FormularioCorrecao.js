@@ -44,7 +44,7 @@ export default function FormularioCorrecao({ redacao, criterios, feedback, onSal
     setErroIA(null);
 
     try {
-      const resultado = await apiFetch("/corrigir", {
+      const resultado = await apiFetch("/redacoes/corrigir", {
         method: "POST",
         body: JSON.stringify({
           tema: redacao.tema,
