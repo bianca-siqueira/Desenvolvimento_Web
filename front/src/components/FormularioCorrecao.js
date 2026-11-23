@@ -19,29 +19,38 @@ function notaValida(valor) {
 }
 
 // Painel inferior direito: o professor revisa as notas e a justificativa sugeridas pela IA.
-// Os campos ficam em estado local; ao salvar, a página principal atualiza a lista de redações.
-export default function FormularioCorrecao({ redacao, criterios, feedback, onSalvar, onFeedback }) {
-  // Se o professor já salvou algo, usa a correção dele; senão, parte da sugestão da IA.
+export default function FormularioCorrecao({
+  redacao,
+  criterios,
+  feedback,
+  onSalvar,
+  onFeedback,
+  onAtualizarIA,
+}) {
+  const [avaliacaoIA, setAvaliacaoIA] = useState(redacao.avaliacaoIA);
+
+  // Se o professor já salvou algo, utiliza a correção dele.
   const inicial = redacao.correcao ?? {
-    notas: redacao.avaliacaoIA.notas,
-    justificativa: redacao.avaliacaoIA.justificativa,
+    notas: avaliacaoIA.notas,
+    justificativa: avaliacaoIA.justificativa,
     comentario: "",
   };
 
   const [notas, setNotas] = useState(inicial.notas);
   const [justificativa, setJustificativa] = useState(inicial.justificativa);
   const [comentario, setComentario] = useState(inicial.comentario);
-  
+
   const [carregandoIA, setCarregandoIA] = useState(false);
   const [erroIA, setErroIA] = useState(null);
 
   const totalProfessor = somarNotas(notas);
-  const totalIA = somarNotas(redacao.avaliacaoIA.notas);
+  const totalIA = somarNotas(avaliacaoIA.notas);
   const todasNotasValidas = criterios.every((c) => notaValida(notas[c.id]));
-  
+
   async function handleCorrigirComIA() {
     setCarregandoIA(true);
     setErroIA(null);
+    onFeedback(null);
 
     try {
       const resultado = await apiFetch("/redacoes/corrigir", {
@@ -52,55 +61,76 @@ export default function FormularioCorrecao({ redacao, criterios, feedback, onSal
         }),
       });
 
-      //Adapta os campos retornados pelo Pydantic do back para critériso
-      const novasNotas = { ...notas };
-      const comp = resultado.competencias || resultado;
+      // As notas retornadas pelo backend ficam dentro de resultado.notas.
+      const notasRecebidas = resultado?.notas;
+      const valoresValidos = [0, 40, 80, 120, 160, 200];
 
-      criterios.forEach((c, index) => {
-        const chaveMinuscula = c.id.toLowerCase(); 
-        const chaveMaiuscula = c.id.toUpperCase(); 
-        const chavePorIndice = `competencia_${index + 1}`;
+      const notasValidas = criterios.every((criterio) =>
+        valoresValidos.includes(Number(notasRecebidas?.[criterio.id]))
+      );
 
-        if (comp[c.id] !== undefined) novasNotas[c.id] = comp[c.id];
-        else if (comp[chaveMinuscula] !== undefined) novasNotas[c.id] = comp[chaveMinuscula];
-        else if (comp[chaveMaiuscula] !== undefined) novasNotas[c.id] = comp[chaveMaiuscula];
-        else if (comp[chavePorIndice] !== undefined) novasNotas[c.id] = comp[chavePorIndice];
+      if (!notasValidas) {
+        throw new Error("A resposta da IA possui notas inválidas.");
+      }
+
+      if (typeof resultado.justificativa !== "string") {
+        throw new Error("A IA não retornou uma justificativa válida.");
+      }
+
+      const novasNotas = {};
+
+      criterios.forEach((criterio) => {
+        novasNotas[criterio.id] = Number(notasRecebidas[criterio.id]);
       });
 
-      setNotas(novasNotas);
+      // Organiza a resposta no formato utilizado pelo frontend.
+      const novaAvaliacao = {
+        notas: novasNotas,
+        justificativa: resultado.justificativa,
+        destaques: Array.isArray(resultado.destaques)
+          ? resultado.destaques
+          : [],
+      };
 
-      if (resultado.justificativa || resultado.comentario_geral || resultado.feedback_geral) {
-        setJustificativa(
-          resultado.justificativa || resultado.comentario_geral || resultado.feedback_geral
-        );
-      }
+      // Atualiza as informações da avaliação.
+      setAvaliacaoIA(novaAvaliacao);
+      setNotas(novasNotas);
+      setJustificativa(novaAvaliacao.justificativa);
+
+      // Atualiza os dados da redação na página do professor.
+      onAtualizarIA(redacao.id, novaAvaliacao);
 
       onFeedback({
         tipo: "sucesso",
         mensagem: "Avaliação gerada pela IA com sucesso! Revise os valores antes de liberar.",
       });
+
     } catch (err) {
       setErroIA(err.message);
-      onFeedback({
-        tipo: "erro",
-        mensagem: `Erro ao consultar a IA: ${err.message}`,
-      });
+
     } finally {
       setCarregandoIA(false);
     }
   }
 
   function handleNotaChange(criterioId, valor) {
-    setNotas((anteriores) => ({ ...anteriores, [criterioId]: valor }));
+    setNotas((anteriores) => ({
+      ...anteriores,
+      [criterioId]: valor,
+    }));
   }
 
   function restaurarSugestaoIA() {
-    setNotas(redacao.avaliacaoIA.notas);
-    setJustificativa(redacao.avaliacaoIA.justificativa);
-    onFeedback({ tipo: "info", mensagem: "Notas e justificativa voltaram para a sugestão original da IA." });
+    setNotas(avaliacaoIA.notas);
+    setJustificativa(avaliacaoIA.justificativa);
+
+    onFeedback({
+      tipo: "info",
+      mensagem: "Notas e justificativa voltaram para a sugestão original da IA.",
+    });
   }
 
-  // novoStatus: "Em Análise" (rascunho) ou "Revisado" (feedback liberado)
+  // novoStatus: "Em Análise" (rascunho) ou "Revisado" (feedback liberado).
   function enviar(novoStatus) {
     if (!todasNotasValidas) {
       onFeedback({
@@ -119,6 +149,7 @@ export default function FormularioCorrecao({ redacao, criterios, feedback, onSal
     }
 
     const notasNumericas = {};
+
     criterios.forEach((c) => {
       notasNumericas[c.id] = Number(notas[c.id]);
     });
@@ -146,11 +177,13 @@ export default function FormularioCorrecao({ redacao, criterios, feedback, onSal
           <span className="text-xs font-semibold uppercase tracking-wider text-indigo-600">
             Correção do Professor
           </span>
-          <h3 className="text-lg font-bold text-slate-800">Revise a avaliação sugerida pela IA</h3>
+
+          <h3 className="text-lg font-bold text-slate-800">
+            Revise a avaliação sugerida pela IA
+          </h3>
         </div>
 
         <div className="flex items-center gap-4">
-          {/*Botão para acionar a API real da IA */}
           <button
             type="button"
             onClick={handleCorrigirComIA}
@@ -162,11 +195,17 @@ export default function FormularioCorrecao({ redacao, criterios, feedback, onSal
 
           <div className="sm:text-right">
             <p className="text-xs text-slate-500">Nota total</p>
+
             <p className="text-2xl font-bold text-slate-800">
               {totalProfessor}
-              <span className="text-sm font-medium text-slate-400"> / {NOTA_MAXIMA_TOTAL}</span>
+              <span className="text-sm font-medium text-slate-400">
+                {" "}/ {NOTA_MAXIMA_TOTAL}
+              </span>
             </p>
-            <p className="text-xs text-indigo-700">IA sugeriu: {totalIA}</p>
+
+            <p className="text-xs text-indigo-700">
+              IA sugeriu: {totalIA}
+            </p>
           </div>
         </div>
       </div>
@@ -183,7 +222,7 @@ export default function FormularioCorrecao({ redacao, criterios, feedback, onSal
             <CriterioInput
               key={criterio.id}
               criterio={criterio}
-              notaSugerida={redacao.avaliacaoIA.notas[criterio.id]}
+              notaSugerida={avaliacaoIA.notas[criterio.id]}
               valor={notas[criterio.id]}
               onChange={handleNotaChange}
               max={NOTA_MAXIMA_CRITERIO}
@@ -194,9 +233,13 @@ export default function FormularioCorrecao({ redacao, criterios, feedback, onSal
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="justificativa" className="text-sm font-semibold text-slate-800">
+            <label
+              htmlFor="justificativa"
+              className="text-sm font-semibold text-slate-800"
+            >
               Justificativa da avaliação
             </label>
+
             <textarea
               id="justificativa"
               rows={5}
@@ -207,9 +250,13 @@ export default function FormularioCorrecao({ redacao, criterios, feedback, onSal
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="comentario" className="text-sm font-semibold text-slate-800">
+            <label
+              htmlFor="comentario"
+              className="text-sm font-semibold text-slate-800"
+            >
               Comentário para o aluno
             </label>
+
             <textarea
               id="comentario"
               rows={5}

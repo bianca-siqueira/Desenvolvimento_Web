@@ -281,6 +281,143 @@ A resposta da IA também é validada antes de ser enviada ao frontend, garantind
 
 ---
 
+<<<<<<< HEAD
 # Sprint 3
 
 Link da URL pública do frontend: https://desenvolvimento-web-frontend-cn1000.onrender.com
+=======
+---
+
+# Sprint 3
+
+## 1. Visão geral
+
+Nesta terceira sprint, foi realizada a integração entre o frontend e o backend, permitindo que o sistema seja acessado por meio de uma URL pública e consuma a API hospedada no Render.
+
+Também foi implementado o sistema de autenticação, utilizando login e JWT (JSON Web Token), com separação dos acessos entre professores e alunos.
+
+O professor pode solicitar novas análises utilizando o Google Gemini, revisar as notas sugeridas pela IA, alterar a avaliação, adicionar comentários e liberar o feedback para o estudante.
+
+## 2. Hospedagem
+
+O projeto está hospedado na plataforma Render, com frontend e backend publicados separadamente.
+
+### 2.1 Frontend
+
+O frontend foi hospedado e pode ser acessado pelos seguintes endereços:
+
+- **Página inicial e login:** https://desenvolvimento-web-frontend-cn1000.onrender.com/
+- **Área do professor:** https://desenvolvimento-web-frontend-cn1000.onrender.com/professor
+- **Área do aluno:** https://desenvolvimento-web-frontend-cn1000.onrender.com/aluno
+
+A página inicial permite realizar o login, direcionando o usuário para a interface correspondente ao seu perfil.
+
+Na área do professor, é possível visualizar as redações, solicitar análises com IA, revisar as notas e liberar o feedback.
+
+Na área do aluno, é possível visualizar as redações e consultar as correções disponibilizadas pelo professor.
+
+### 2.2 Backend
+
+O backend continua hospedado no Render, sendo responsável pelo processamento das requisições, autenticação dos usuários e integração com o Google Gemini.
+
+- **API:** https://desenvolvimento-web-api.onrender.com/
+- **Documentação Swagger:** https://desenvolvimento-web-api.onrender.com/docs
+
+A documentação Swagger permite visualizar e testar os endpoints disponibilizados pelo backend.
+
+## 3. Integração entre frontend e backend
+
+O frontend, desenvolvido com Next.js e React, realiza requisições HTTP para o backend utilizando dados no formato JSON.
+
+A comunicação entre as aplicações é centralizada no arquivo `front/src/services/api.js`, responsável por realizar as requisições e incluir o token de autenticação quando necessário.
+
+A URL do backend é definida por meio da variável de ambiente `NEXT_PUBLIC_API_URL`, permitindo alterar o endereço da API sem modificar diretamente o código-fonte.
+
+```env
+NEXT_PUBLIC_API_URL=https://desenvolvimento-web-api.onrender.com
+```
+
+### 3.1 Correção de redações com IA
+
+O professor pode solicitar uma nova análise por meio do botão "Gerar nova análise com IA".
+
+O frontend envia o tema e o texto da redação para o endpoint `POST /redacoes/corrigir`.
+
+O backend recebe os dados, realiza as validações necessárias e encaminha o conteúdo para o serviço de inteligência artificial Google Gemini.
+
+A resposta retorna:
+
+- Notas sugeridas para as cinco competências do ENEM.
+- Justificativa da avaliação.
+- Destaques de trechos relacionados à tese, aos argumentos e ao repertório sociocultural.
+
+Após receber a resposta, o frontend atualiza os campos da avaliação, permitindo que o professor revise as sugestões, altere as notas e escreva comentários antes de liberar o feedback ao aluno.
+
+## 4. Autenticação e JWT
+
+Foi implementado um sistema de login utilizando autenticação por JSON Web Token (JWT).
+
+O login é realizado por meio do endpoint `POST /api/login`, que recebe o e-mail, a senha e o perfil selecionado pelo usuário.
+
+Após validar as credenciais, o backend retorna um token JWT e as informações do usuário.
+
+O token é armazenado no `localStorage` do navegador, permitindo sua utilização nas próximas requisições protegidas.
+
+### 4.1 Envio e validação do token
+
+As requisições protegidas utilizam o cabeçalho HTTP `Authorization`, no seguinte formato:
+
+```http
+Authorization: Bearer <token>
+```
+
+A função `apiFetch` adiciona automaticamente esse cabeçalho às requisições que necessitam de autenticação.
+
+No backend, o arquivo `auth.py` contém as funções responsáveis pela criação e validação dos tokens.
+
+A função `criarToken` gera o JWT utilizando o algoritmo HS256 e define sua validade em 8 horas.
+
+A função `verificarToken` realiza a validação do token recebido, verificando sua autenticidade e validade.
+
+O endpoint `POST /redacoes/corrigir` utiliza essa validação como dependência, impedindo que requisições sem um token válido acessem a funcionalidade.
+
+Tokens inválidos ou expirados recebem uma resposta HTTP 401 (Unauthorized).
+
+### 4.2 Separação dos perfis
+
+Após o login, o sistema identifica o perfil do usuário e direciona o acesso para a área correspondente:
+
+- **Professor:** acesso à listagem de redações, análise da IA, revisão das notas e liberação do feedback.
+- **Aluno:** acesso à área de visualização das redações e dos feedbacks disponíveis.
+
+## 5. Estados de carregamento e tratamento de erros
+
+Foram implementados estados visuais para informar ao usuário o andamento das operações e apresentar mensagens quando ocorrem falhas.
+
+Durante a solicitação de correção pela IA, a interface apresenta um indicador de carregamento, impedindo novas solicitações enquanto a análise está sendo processada.
+
+Também foram implementadas mensagens para situações como:
+
+- Falha na comunicação com a API.
+- Credenciais inválidas durante o login.
+- Falha na solicitação de uma nova análise.
+- Erros retornados durante o processamento da correção.
+
+Quando ocorre uma falha na comunicação com a IA, o professor recebe uma mensagem de erro e pode tentar realizar uma nova solicitação.
+
+## 6. Configuração por variáveis de ambiente
+
+A URL da API e as origens permitidas pelo CORS são configuradas por variáveis de ambiente.
+
+No frontend, a variável `NEXT_PUBLIC_API_URL` define o endereço do backend utilizado nas requisições.
+
+No backend, a variável `FRONTEND_URL` define a origem autorizada pelo middleware CORS do FastAPI, permitindo a comunicação entre as aplicações hospedadas em domínios diferentes.
+
+Exemplo de configuração no backend:
+
+```env
+FRONTEND_URL=https://desenvolvimento-web-frontend-cn1000.onrender.com
+```
+
+As credenciais e chaves utilizadas pelo backend, incluindo a chave da API Gemini e o segredo utilizado na geração dos tokens JWT, são configuradas por variáveis de ambiente, evitando sua exposição diretamente no código-fonte.
+
