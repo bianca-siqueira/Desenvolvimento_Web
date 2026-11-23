@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from schemas.redacao import RedacaoRequest, CorrecaoIA
 from services.ia_service import corrigir_redacao
 from backend.main import verificarToken
+from auth import criarToken
 
 router = APIRouter()
 
