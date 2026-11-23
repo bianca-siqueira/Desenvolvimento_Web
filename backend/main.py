@@ -8,6 +8,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from datetime import datetime, timedelta, timezone
 from pydantic import BaseModel
 from routers import redacoes
+from auth import criarToken
 
 SECRET_KEY = os.getenv("JWT_SECRETO", "chave-secreta-projeto-web-2026")
 ALGORITHM = "HS256" #Gera e valida os tokens a partir de uma chave secreta compartilhada
