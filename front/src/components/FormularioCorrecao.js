@@ -3,6 +3,7 @@
 import { useState } from "react";
 import CriterioInput from "./CriterioInput";
 import { NOTA_MAXIMA_CRITERIO, NOTA_MAXIMA_TOTAL, somarNotas } from "@/utils/notas";
+import { apiFetch } from "@/services/api";
 
 const ESTILOS_FEEDBACK = {
   sucesso: "bg-emerald-50 border-emerald-300 text-emerald-800",
@@ -30,10 +31,64 @@ export default function FormularioCorrecao({ redacao, criterios, feedback, onSal
   const [notas, setNotas] = useState(inicial.notas);
   const [justificativa, setJustificativa] = useState(inicial.justificativa);
   const [comentario, setComentario] = useState(inicial.comentario);
+  
+  const [carregandoIA, setCarregandoIA] = useState(false);
+  const [erroIA, setErroIA] = useState(null);
 
   const totalProfessor = somarNotas(notas);
   const totalIA = somarNotas(redacao.avaliacaoIA.notas);
   const todasNotasValidas = criterios.every((c) => notaValida(notas[c.id]));
+  
+  async function handleCorrigirComIA() {
+    setCarregandoIA(true);
+    setErroIA(null);
+
+    try {
+      const resultado = await apiFetch("/corrigir", {
+        method: "POST",
+        body: JSON.stringify({
+          tema: redacao.tema,
+          texto: redacao.texto,
+        }),
+      });
+
+      //Adapta os campos retornados pelo Pydantic do back para critériso
+      const novasNotas = { ...notas };
+      const comp = resultado.competencias || resultado;
+
+      criterios.forEach((c, index) => {
+        const chaveMinuscula = c.id.toLowerCase(); 
+        const chaveMaiuscula = c.id.toUpperCase(); 
+        const chavePorIndice = `competencia_${index + 1}`;
+
+        if (comp[c.id] !== undefined) novasNotas[c.id] = comp[c.id];
+        else if (comp[chaveMinuscula] !== undefined) novasNotas[c.id] = comp[chaveMinuscula];
+        else if (comp[chaveMaiuscula] !== undefined) novasNotas[c.id] = comp[chaveMaiuscula];
+        else if (comp[chavePorIndice] !== undefined) novasNotas[c.id] = comp[chavePorIndice];
+      });
+
+      setNotas(novasNotas);
+
+      if (resultado.justificativa || resultado.comentario_geral || resultado.feedback_geral) {
+        setJustificativa(
+          resultado.justificativa || resultado.comentario_geral || resultado.feedback_geral
+        );
+      }
+
+      onFeedback({
+        tipo: "sucesso",
+        mensagem: "Avaliação gerada pela IA com sucesso! Revise os valores antes de liberar.",
+      });
+    } catch (err) {
+      setErroIA(err.message);
+      onFeedback({
+        tipo: "erro",
+        mensagem: `Erro ao consultar a IA: ${err.message}`,
+      });
+    } finally {
+      setCarregandoIA(false);
+    }
+  }
 
   function handleNotaChange(criterioId, valor) {
     setNotas((anteriores) => ({ ...anteriores, [criterioId]: valor }));
@@ -94,15 +149,33 @@ export default function FormularioCorrecao({ redacao, criterios, feedback, onSal
           <h3 className="text-lg font-bold text-slate-800">Revise a avaliação sugerida pela IA</h3>
         </div>
 
-        <div className="sm:text-right">
-          <p className="text-xs text-slate-500">Nota total</p>
-          <p className="text-2xl font-bold text-slate-800">
-            {totalProfessor}
-            <span className="text-sm font-medium text-slate-400"> / {NOTA_MAXIMA_TOTAL}</span>
-          </p>
-          <p className="text-xs text-indigo-700">IA sugeriu: {totalIA}</p>
+        <div className="flex items-center gap-4">
+          {/*Botão para acionar a API real da IA */}
+          <button
+            type="button"
+            onClick={handleCorrigirComIA}
+            disabled={carregandoIA}
+            className="rounded-lg bg-indigo-50 border border-indigo-200 px-3.5 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 disabled:opacity-50 transition cursor-pointer"
+          >
+            {carregandoIA ? "Analisando com IA..." : "✨ Gerar nova análise com IA"}
+          </button>
+
+          <div className="sm:text-right">
+            <p className="text-xs text-slate-500">Nota total</p>
+            <p className="text-2xl font-bold text-slate-800">
+              {totalProfessor}
+              <span className="text-sm font-medium text-slate-400"> / {NOTA_MAXIMA_TOTAL}</span>
+            </p>
+            <p className="text-xs text-indigo-700">IA sugeriu: {totalIA}</p>
+          </div>
         </div>
       </div>
+
+      {erroIA && (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-xs text-red-700">
+          Falha na comunicação com a API: {erroIA}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
